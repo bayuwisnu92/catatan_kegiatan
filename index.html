@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catatan Kegiatan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Courier New', monospace;
+            background-image: linear-gradient(#eee 0.1em, transparent 0.1em);
+            background-size: 100% 1.2em;
+            padding-top: 2rem;
+        }
+        
+        .notebook-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-left: 1px solid #ffcccc;
+            position: relative;
+            background: #fffdf6;
+        }
+        
+        .notebook-container::before {
+            content: "";
+            position: absolute;
+            left: 40px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: #ff9999;
+        }
+        
+        h1 {
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #ff9999;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .kegiatan-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .kegiatan-item:hover {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .kegiatan-text {
+            flex-grow: 1;
+            margin-left: 15px;
+            font-size: 1rem;
+            position: relative;
+            padding-left: 15px;
+        }
+        
+        .kegiatan-text::before {
+            content: "○";
+            position: absolute;
+            left: -5px;
+            color: #ff9999;
+            font-size: 0.8rem;
+        }
+        
+        .actions {
+            margin-left: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .coret {
+            text-decoration: line-through;
+            color: #999 !important;
+        }
+        
+        .form-check-input {
+            cursor: pointer;
+        }
+        
+        .form-check-input:checked + .kegiatan-text::before {
+            content: "✓";
+            color: #4CAF50;
+        }
+        
+        .form-check-input:checked + .kegiatan-text {
+            color: #999;
+        }
+        
+        .btn-primary {
+            background-color: #ff9999;
+            border-color: #ff9999;
+            color: white;
+            margin-top: 1rem;
+        }
+        
+        .btn-primary:hover {
+            background-color: #ff8080;
+            border-color: #ff8080;
+        }
+        
+        .btn-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .btn-danger:hover {
+            background-color: #f1b0b7;
+            border-color: #ec9ca4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container notebook-container py-4">
+        <h1>📝 Catatan Kegiatan</h1>
+        
+        <ul class="list-group mb-3" id="daftar-kegiatan">
+            <!-- Daftar kegiatan akan muncul di sini -->
+        </ul>
+        
+        <button class="btn btn-primary tambah-kegiatan">+ Tambah Kegiatan</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Struktur data yang menyimpan status kegiatan
+        let kegiatan = JSON.parse(localStorage.getItem('kegiatan')) || [];
+        const daftarKegiatan = document.getElementById('daftar-kegiatan');
+        
+        // Fungsi untuk menampilkan semua kegiatan
+        function tampilkanKegiatan() {
+            daftarKegiatan.innerHTML = kegiatan.map((item, index) => `
+                <li class="list-group-item kegiatan-item">
+                    <div class="form-check d-flex align-items-center">
+                        <input class="form-check-input" type="checkbox" 
+                               id="check-${index}" ${item.selesai ? 'checked' : ''}
+                               data-index="${index}">
+                        <span class="kegiatan-text ${item.selesai ? 'coret' : ''}">
+                            ${item.text}
+                        </span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-danger btn-sm hapus-kegiatan" data-index="${index}">Hapus</button>
+                    </div>
+                </li>
+            `).join('');
+            
+            // Event listener untuk tombol hapus
+            document.querySelectorAll('.hapus-kegiatan').forEach(button => {
+                button.addEventListener('click', function() {
+                    hapusKegiatan(parseInt(this.getAttribute('data-index')));
+                });
+            });
+            
+            // Event listener untuk checkbox
+            document.querySelectorAll('.form-check-input').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    toggleSelesai(parseInt(this.getAttribute('data-index')));
+                });
+            });
+        }
+        
+        // Fungsi untuk toggle status selesai
+        function toggleSelesai(index) {
+            kegiatan[index].selesai = !kegiatan[index].selesai;
+            localStorage.setItem('kegiatan', JSON.stringify(kegiatan));
+            tampilkanKegiatan();
+        }
+        
+        // Fungsi untuk menambah kegiatan
+        function tambahKegiatan() {
+            const kegiatanBaru = prompt('Masukkan kegiatan baru:');
+            if (kegiatanBaru && kegiatanBaru.trim() !== '') {
+                kegiatan.push({
+                    text: kegiatanBaru.trim(),
+                    selesai: false
+                });
+                localStorage.setItem('kegiatan', JSON.stringify(kegiatan));
+                tampilkanKegiatan();
+            }
+        }
+        
+        // Fungsi untuk menghapus kegiatan
+        function hapusKegiatan(index) {
+            if (confirm('Apakah Anda yakin ingin menghapus kegiatan ini?')) {
+                kegiatan.splice(index, 1);
+                localStorage.setItem('kegiatan', JSON.stringify(kegiatan));
+                tampilkanKegiatan();
+            }
+        }
+        
+        // Event listener untuk tombol tambah
+        document.querySelector('.tambah-kegiatan').addEventListener('click', tambahKegiatan);
+        
+        // Tampilkan kegiatan saat halaman dimuat
+        tampilkanKegiatan();
+    </script>
+</body>
+</html>
